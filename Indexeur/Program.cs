@@ -25,14 +25,14 @@ namespace Indexeur
             string path = Console.ReadLine();
 
             StringBuilder files_csv = new StringBuilder("file name\n");
-            StringBuilder denied_directories_csv = new StringBuilder("denied directory\n");
+            StringBuilder failed_directories_csv = new StringBuilder("directory,reason\n");
             Stack<string> directories = new Stack<string>();
             directories.Push(path);
 
             Console.WriteLine("Building index");
 
             ulong file_count = 0;
-            ulong denied_directories_count = 0;
+            ulong failed_directories_count = 0;
             while (directories.Count > 0)
             {
                 string d = directories.Pop();
@@ -56,20 +56,28 @@ namespace Indexeur
                 }
                 catch (UnauthorizedAccessException)
                 {
-                    denied_directories_csv.Append('"');
-                    denied_directories_csv.Append(d);
-                    denied_directories_csv.Append("\"\n");
+                    failed_directories_csv.Append('"');
+                    failed_directories_csv.Append(d);
+                    failed_directories_csv.Append("\",authorization\n");
 
-                    denied_directories_count += 1;
+                    failed_directories_count += 1;
                 }
                 catch (DirectoryNotFoundException)
                 {
 
                 }
+                catch (PathTooLongException)
+                {
+                    failed_directories_csv.Append('"');
+                    failed_directories_csv.Append(d);
+                    failed_directories_csv.Append("\",path too long\n");
+
+                    failed_directories_count += 1;
+                }
             }
 
             Console.WriteLine(file_count.ToString() + " files have been indexed");
-            Console.WriteLine(denied_directories_count.ToString() + " access to directories were denied");
+            Console.WriteLine(failed_directories_count.ToString() + " access to directories have failed");
 
             try
             {
@@ -83,12 +91,12 @@ namespace Indexeur
 
             try
             {
-                File.WriteAllText("denied_directories.csv", denied_directories_csv.ToString());
-                Console.WriteLine("Denied directories have been written in denied_directories.csv");
+                File.WriteAllText("failed_directories.csv", failed_directories_csv.ToString());
+                Console.WriteLine("Failed directories have been written in failed_directories.csv");
             }
             catch (UnauthorizedAccessException)
             {
-                Console.WriteLine("Authorization required to write the output in denied_directories.csv");
+                Console.WriteLine("Authorization required to write the output in failed_directories.csv");
             }
 
             Console.WriteLine("Press any key to end the program");
